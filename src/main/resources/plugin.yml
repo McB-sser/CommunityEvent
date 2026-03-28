@@ -1,0 +1,6 @@
+name: CommunityEvent
+version: 1.0.0-SNAPSHOT
+main: mcbesser.communityevent.CommunityEventPlugin
+api-version: '1.21'
+author: McBesser
+description: Community event plugin with shared item goals and custom reward vaults.
