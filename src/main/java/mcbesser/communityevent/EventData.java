@@ -5,7 +5,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,6 +22,7 @@ public final class EventData {
     private int collectedAmount;
     private boolean completed;
     private final Set<UUID> participants;
+    private final Map<UUID, Integer> contributions;
 
     public EventData(String id, String worldName, int x, int y, int z, Material targetMaterial, int requiredAmount) {
         this.id = id;
@@ -32,6 +35,7 @@ public final class EventData {
         this.collectedAmount = 0;
         this.completed = false;
         this.participants = new HashSet<>();
+        this.contributions = new HashMap<>();
     }
 
     public static EventData fromConfig(String id, ConfigurationSection section) {
@@ -52,6 +56,15 @@ public final class EventData {
             } catch (IllegalArgumentException ignored) {
             }
         }
+        ConfigurationSection contributionSection = section.getConfigurationSection("contributions");
+        if (contributionSection != null) {
+            for (String key : contributionSection.getKeys(false)) {
+                try {
+                    data.contributions.put(UUID.fromString(key), contributionSection.getInt(key, 0));
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        }
         return data;
     }
 
@@ -65,6 +78,11 @@ public final class EventData {
         section.set("collected", collectedAmount);
         section.set("completed", completed);
         section.set("participants", participants.stream().map(UUID::toString).toList());
+        section.set("contributions", null);
+        ConfigurationSection contributionSection = section.createSection("contributions");
+        for (Map.Entry<UUID, Integer> entry : contributions.entrySet()) {
+            contributionSection.set(entry.getKey().toString(), entry.getValue());
+        }
     }
 
     public String getId() {
@@ -115,6 +133,14 @@ public final class EventData {
         participants.add(uuid);
     }
 
+    public Map<UUID, Integer> getContributions() {
+        return contributions;
+    }
+
+    public int getContribution(UUID uuid) {
+        return contributions.getOrDefault(uuid, 0);
+    }
+
     public int addProgress(int amount) {
         int accepted = Math.min(amount, getRemainingAmount());
         collectedAmount += accepted;
@@ -123,6 +149,13 @@ public final class EventData {
             completed = true;
         }
         return accepted;
+    }
+
+    public void addContribution(UUID uuid, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        contributions.merge(uuid, amount, Integer::sum);
     }
 
     public double getProgress() {

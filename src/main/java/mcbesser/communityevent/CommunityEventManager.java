@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -311,6 +312,7 @@ public final class CommunityEventManager {
 
         if (moved > 0) {
             event.addParticipant(player.getUniqueId());
+            event.addContribution(player.getUniqueId(), moved);
             event.addProgress(moved);
             refreshVisuals(event);
             if (event.isCompleted()) {
@@ -319,6 +321,25 @@ public final class CommunityEventManager {
             save();
         }
         return moved;
+    }
+
+    public boolean hasDiscoveredTarget(EventData event) {
+        return event.getCollectedAmount() > 0;
+    }
+
+    public List<Map.Entry<UUID, Integer>> getTopContributors(EventData event, int limit) {
+        return event.getContributions().entrySet().stream()
+                .sorted(Map.Entry.<UUID, Integer>comparingByValue(Comparator.reverseOrder()))
+                .limit(limit)
+                .toList();
+    }
+
+    public String getPlayerName(UUID uuid) {
+        Player onlinePlayer = Bukkit.getPlayer(uuid);
+        if (onlinePlayer != null) {
+            return onlinePlayer.getName();
+        }
+        return Optional.ofNullable(Bukkit.getOfflinePlayer(uuid).getName()).orElse("Unbekannt");
     }
 
     public boolean tryUseRewardKey(Player player, Block clickedBlock, ItemStack handItem) {
