@@ -208,22 +208,22 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
             lines = List.of(
                     ChatColor.DARK_GRAY + " ",
                     ChatColor.YELLOW + "Ziel: " + ChatColor.WHITE + "???",
-                    ChatColor.GRAY + "Fortschritt: " + ChatColor.WHITE + "???",
-                    ChatColor.GRAY + " ",
-                    ChatColor.WHITE + "Es muessen Items",
-                    ChatColor.WHITE + "gesammelt werden,",
-                    ChatColor.WHITE + "aber welches?",
-                    ChatColor.WHITE + "Finde es heraus",
-                    ChatColor.WHITE + "und probier es durch."
+                    ChatColor.YELLOW + "Fortschritt: " + ChatColor.WHITE + "???",
+                    ChatColor.DARK_GRAY + "  ",
+                    ChatColor.GREEN + "Es muessen Items",
+                    ChatColor.GREEN + "gesammelt werden,",
+                    ChatColor.GREEN + "aber welches?",
+                    ChatColor.GREEN + "Finde es heraus",
+                    ChatColor.GREEN + "und probier es durch."
             );
         } else {
             int percent = (int) Math.floor(event.getProgress() * 100.0D);
             lines = List.of(
                     ChatColor.DARK_GRAY + " ",
                     ChatColor.YELLOW + "Ziel: " + ChatColor.WHITE + MaterialNames.forPlayer(player, event.getTargetMaterial()),
-                    ChatColor.YELLOW + "Fuellung: " + ChatColor.WHITE + event.getCollectedAmount() + "/" + event.getRequiredAmount(),
+                    ChatColor.YELLOW + "F\u00fcllung: " + ChatColor.WHITE + event.getCollectedAmount() + "/" + event.getRequiredAmount(),
                     ChatColor.YELLOW + "Fortschritt: " + ChatColor.WHITE + percent + "%",
-                    ChatColor.GRAY + " ",
+                    ChatColor.DARK_GRAY + "  ",
                     ChatColor.GOLD + "Ranking:",
                     rankingLine(event, 0),
                     rankingLine(event, 1),
@@ -244,12 +244,12 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
     private String rankingLine(EventData event, int index) {
         List<Map.Entry<UUID, Integer>> ranking = eventManager.getTopContributors(event, 3);
         if (index >= ranking.size()) {
-            return ChatColor.GRAY + "-" + (index + 1) + ". ---";
+            return ChatColor.GOLD + "" + (index + 1) + ". " + ChatColor.WHITE + "---";
         }
 
         Map.Entry<UUID, Integer> entry = ranking.get(index);
         String playerName = eventManager.getPlayerName(entry.getKey());
-        return ChatColor.WHITE + "" + (index + 1) + ". " + playerName + ChatColor.GRAY + " - " + entry.getValue();
+        return ChatColor.GOLD + "" + (index + 1) + ". " + ChatColor.GREEN + playerName + ChatColor.WHITE + ": " + entry.getValue();
     }
 
     private String makeUnique(String line, int score) {

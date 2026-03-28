@@ -44,11 +44,7 @@ public final class MaterialNames {
     }
 
     public static String forPlayer(Player player, Material material) {
-        String locale = player.getLocale();
-        if (locale != null && locale.toLowerCase().startsWith("de")) {
-            return GERMAN_NAMES.getOrDefault(material, fallback(material));
-        }
-        return fallback(material);
+        return GERMAN_NAMES.getOrDefault(material, fallback(material));
     }
 
     private static String fallback(Material material) {
