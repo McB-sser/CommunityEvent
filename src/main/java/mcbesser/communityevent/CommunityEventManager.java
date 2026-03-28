@@ -22,6 +22,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Transformation;
 import org.joml.AxisAngle4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.io.File;
@@ -36,7 +37,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public final class CommunityEventManager {
     private static final int TUBE_SEGMENTS = 10;
@@ -456,11 +456,17 @@ public final class CommunityEventManager {
             itemDisplay.setPersistent(true);
             itemDisplay.setBillboard(Display.Billboard.FIXED);
             itemDisplay.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+            float rotationX = (float) (-Math.PI / 2.0D + seededRange(event.getId(), i, 0.38D));
+            float rotationY = (float) seededRange(event.getId(), i + 31, Math.PI);
+            float rotationZ = (float) seededRange(event.getId(), i + 67, 0.38D);
             itemDisplay.setTransformation(new Transformation(
                     new Vector3f(0.0F, 0.0F, 0.0F),
-                    new AxisAngle4f((float) (-Math.PI / 2.0D), 1.0F, 0.0F, 0.0F),
+                    new Quaternionf()
+                            .rotateX(rotationX)
+                            .rotateY(rotationY)
+                            .rotateZ(rotationZ),
                     new Vector3f(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE),
-                    new AxisAngle4f()
+                    new Quaternionf()
             ));
             tag(itemDisplay, event.getId(), "progress");
         }
@@ -485,6 +491,8 @@ public final class CommunityEventManager {
             orbitItem.setPersistent(true);
             orbitItem.setBillboard(Display.Billboard.FIXED);
             orbitItem.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+            orbitItem.setInterpolationDuration(2);
+            orbitItem.setInterpolationDelay(0);
             orbitItem.setTransformation(new Transformation(
                     new Vector3f(0.0F, 0.0F, 0.0F),
                     new AxisAngle4f(),
@@ -531,13 +539,8 @@ public final class CommunityEventManager {
             return;
         }
 
-        double angle = tick * 0.11D;
-        double radius = 0.22D;
-        Location orbitLocation = potLocation.clone().add(
-                0.5D + (Math.cos(angle) * radius),
-                4.45D,
-                0.5D + (Math.sin(angle) * radius)
-        );
+        double angle = tick * 0.085D;
+        Location orbitLocation = potLocation.clone().add(0.5D, 4.45D, 0.5D);
         orbitLocation.setYaw((float) Math.toDegrees(-angle));
         orbitLocation.setPitch(0.0F);
         orbitItem.teleport(orbitLocation);
@@ -563,9 +566,6 @@ public final class CommunityEventManager {
                 double y = center.getY() + (progress * 3.6D);
                 double z = center.getZ() + (Math.sin(angle) * radius);
                 world.spawnParticle(Particle.ENCHANT, x, y, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-                if ((tick + step + strand) % 3 == 0) {
-                    world.spawnParticle(Particle.WAX_ON, x, y, z, 1, 0.02D, 0.02D, 0.02D, 0.0D);
-                }
             }
         }
     }
@@ -595,6 +595,12 @@ public final class CommunityEventManager {
                 Material.WHITE_STAINED_GLASS,
                 Material.LIGHT_GRAY_STAINED_GLASS
         ).contains(material);
+    }
+
+    private double seededRange(String eventId, int index, double range) {
+        long seed = Objects.hash(eventId, index);
+        Random seededRandom = new Random(seed);
+        return (seededRandom.nextDouble() * 2.0D * range) - range;
     }
 
     private void tag(Entity entity, String eventId, String type) {
