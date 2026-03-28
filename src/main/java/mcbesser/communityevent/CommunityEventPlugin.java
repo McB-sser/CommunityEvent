@@ -195,6 +195,7 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
     private void showEventSidebar(Player player, EventData event) {
         String eventId = event.getId();
         UUID playerId = player.getUniqueId();
+        boolean revealTarget = eventManager.hasDiscoveredTarget(event);
         if (!previousScoreboards.containsKey(playerId)) {
             previousScoreboards.put(playerId, player.getScoreboard());
         }
@@ -204,8 +205,8 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         List<String> lines;
-        if (!eventManager.hasDiscoveredTarget(event)) {
-            lines = List.of(
+        if (!revealTarget) {
+            lines = new java.util.ArrayList<>(List.of(
                     ChatColor.DARK_GRAY + " ",
                     ChatColor.YELLOW + "Ziel: " + ChatColor.WHITE + "???",
                     ChatColor.YELLOW + "Fortschritt: " + ChatColor.WHITE + "???",
@@ -215,20 +216,33 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
                     ChatColor.GREEN + "aber welches?",
                     ChatColor.GREEN + "Finde es heraus",
                     ChatColor.GREEN + "und probier es durch."
-            );
+            ));
+            if (player.isOp()) {
+                lines.add(ChatColor.DARK_GRAY + "   ");
+                lines.add(ChatColor.GOLD + "OP-Ziel: " + ChatColor.WHITE + MaterialNames.forPlayer(player, event.getTargetMaterial()));
+            }
         } else {
-            int percent = (int) Math.floor(event.getProgress() * 100.0D);
-            lines = List.of(
+            String fillValue = eventManager.hasDiscoveredTarget(event)
+                    ? event.getCollectedAmount() + "/" + event.getRequiredAmount()
+                    : "???";
+            String progressValue = eventManager.hasDiscoveredTarget(event)
+                    ? ((int) Math.floor(event.getProgress() * 100.0D)) + "%"
+                    : "???";
+            lines = new java.util.ArrayList<>(List.of(
                     ChatColor.DARK_GRAY + " ",
                     ChatColor.YELLOW + "Ziel: " + ChatColor.WHITE + MaterialNames.forPlayer(player, event.getTargetMaterial()),
-                    ChatColor.YELLOW + "F\u00fcllung: " + ChatColor.WHITE + event.getCollectedAmount() + "/" + event.getRequiredAmount(),
-                    ChatColor.YELLOW + "Fortschritt: " + ChatColor.WHITE + percent + "%",
+                    ChatColor.YELLOW + "F\u00fcllung: " + ChatColor.WHITE + fillValue,
+                    ChatColor.YELLOW + "Fortschritt: " + ChatColor.WHITE + progressValue,
                     ChatColor.DARK_GRAY + "  ",
                     ChatColor.GOLD + "Ranking:",
                     rankingLine(event, 0),
                     rankingLine(event, 1),
                     rankingLine(event, 2)
-            );
+            ));
+            if (player.isOp()) {
+                lines.add(ChatColor.DARK_GRAY + "   ");
+                lines.add(ChatColor.GOLD + "OP-Ziel: " + ChatColor.WHITE + MaterialNames.forPlayer(player, event.getTargetMaterial()));
+            }
         }
 
         int score = lines.size();
