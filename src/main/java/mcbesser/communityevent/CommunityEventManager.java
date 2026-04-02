@@ -42,11 +42,19 @@ import java.util.UUID;
 public final class CommunityEventManager {
     private static final int TUBE_SEGMENTS = 10;
     private static final float TOTAL_TUBE_HEIGHT = 3.0F;
-    private static final int PROGRESS_ITEMS = 18;
+    private static final int PROGRESS_ITEMS = TUBE_SEGMENTS * 2;
     private static final float COLUMN_WIDTH = 0.34F;
     private static final float TOP_POT_SCALE = 0.44F;
     private static final float ITEM_SCALE = 0.24F;
     private static final float ORBIT_ITEM_SCALE = 0.28F;
+    private static final double TUBE_BASE_Y = 1.24D;
+    private static final double TOP_POT_Y = TUBE_BASE_Y + TOTAL_TUBE_HEIGHT;
+    private static final double ORBIT_ITEM_Y = TOP_POT_Y + 0.35D;
+    private static final double PARTICLE_BASE_Y = 0.20D;
+    private static final double PARTICLE_HEIGHT_SPAN = (TUBE_BASE_Y + TOTAL_TUBE_HEIGHT) - PARTICLE_BASE_Y;
+    private static final double PARTICLE_FIRST_PROGRESS = 0.25D;
+    private static final double PARTICLE_TOP_PROGRESS = 0.95D;
+    private static final int PARTICLE_STEPS = 4;
 
     private final JavaPlugin plugin;
     private final Random random = new Random();
@@ -449,7 +457,7 @@ public final class CommunityEventManager {
 
         for (int i = 1; i <= TUBE_SEGMENTS; i++) {
             float segmentHeight = TOTAL_TUBE_HEIGHT / TUBE_SEGMENTS;
-            double segmentBase = 1.0D + ((i - 1) * segmentHeight);
+            double segmentBase = TUBE_BASE_Y + ((i - 1) * segmentHeight);
             Location displayLocation = potLocation.clone().add(0.5, segmentBase, 0.5);
             BlockDisplay glassSegment = potLocation.getWorld().spawn(displayLocation, BlockDisplay.class);
             glassSegment.setBlock(Bukkit.createBlockData(Material.GLASS));
@@ -470,7 +478,7 @@ public final class CommunityEventManager {
         }
 
         for (int i = 0; i < visibleItems; i++) {
-            double yOffset = 1.02D + (1.98D / Math.max(1, PROGRESS_ITEMS - 1)) * i;
+            double yOffset = TUBE_BASE_Y + ((TOTAL_TUBE_HEIGHT / PROGRESS_ITEMS) * (i + 0.5D));
             Location itemLocation = potLocation.clone().add(0.5, yOffset, 0.5);
             ItemDisplay itemDisplay = potLocation.getWorld().spawn(itemLocation, ItemDisplay.class);
             itemDisplay.setItemStack(new ItemStack(event.getTargetMaterial()));
@@ -492,7 +500,7 @@ public final class CommunityEventManager {
             tag(itemDisplay, event.getId(), "progress");
         }
 
-        Location topPotLocation = potLocation.clone().add(0.5, 4.0, 0.5);
+        Location topPotLocation = potLocation.clone().add(0.5, TOP_POT_Y, 0.5);
         BlockDisplay topPot = potLocation.getWorld().spawn(topPotLocation, BlockDisplay.class);
         topPot.setBlock(Bukkit.createBlockData(Material.FLOWER_POT));
         topPot.setPersistent(true);
@@ -506,7 +514,7 @@ public final class CommunityEventManager {
         tag(topPot, event.getId(), "top_pot");
 
         if (event.getCollectedAmount() > 0) {
-            Location orbitLocation = potLocation.clone().add(0.5, 4.45, 0.5);
+            Location orbitLocation = potLocation.clone().add(0.5, ORBIT_ITEM_Y, 0.5);
             ItemDisplay orbitItem = potLocation.getWorld().spawn(orbitLocation, ItemDisplay.class);
             orbitItem.setItemStack(new ItemStack(event.getTargetMaterial()));
             orbitItem.setPersistent(true);
@@ -547,7 +555,7 @@ public final class CommunityEventManager {
         ItemDisplay orbitItem = null;
         String orbitTag = "communityevent:orbit_item";
         String idTag = tagFor(event.getId());
-        for (Entity entity : potLocation.getWorld().getNearbyEntities(potLocation.clone().add(0.5, 4.5, 0.5), 1.2, 0.8, 1.2)) {
+        for (Entity entity : potLocation.getWorld().getNearbyEntities(potLocation.clone().add(0.5, ORBIT_ITEM_Y, 0.5), 1.2, 1.0, 1.2)) {
             if (entity instanceof ItemDisplay itemDisplay
                     && entity.getScoreboardTags().contains(idTag)
                     && entity.getScoreboardTags().contains(orbitTag)) {
@@ -561,7 +569,7 @@ public final class CommunityEventManager {
         }
 
         double angle = tick * 0.085D;
-        Location orbitLocation = potLocation.clone().add(0.5D, 4.45D, 0.5D);
+        Location orbitLocation = potLocation.clone().add(0.5D, ORBIT_ITEM_Y, 0.5D);
         orbitLocation.setYaw((float) Math.toDegrees(-angle));
         orbitLocation.setPitch(0.0F);
         orbitItem.teleport(orbitLocation);
@@ -574,17 +582,18 @@ public final class CommunityEventManager {
         }
 
         World world = potLocation.getWorld();
-        Location center = potLocation.clone().add(0.5, 0.35, 0.5);
+        Location center = potLocation.clone().add(0.5, PARTICLE_BASE_Y, 0.5);
         double baseAngle = tick * 0.18D;
 
         for (int strand = 0; strand < 2; strand++) {
             double strandOffset = strand * Math.PI;
-            for (int step = 0; step < 5; step++) {
-                double progress = step / 4.0D;
+            double particleStepSize = (PARTICLE_TOP_PROGRESS - PARTICLE_FIRST_PROGRESS) / (PARTICLE_STEPS - 1);
+            for (int step = 0; step < PARTICLE_STEPS; step++) {
+                double progress = PARTICLE_FIRST_PROGRESS + (particleStepSize * step);
                 double angle = baseAngle + strandOffset + (progress * Math.PI * 1.7D);
                 double radius = 0.38D + (0.04D * Math.sin(baseAngle + progress));
                 double x = center.getX() + (Math.cos(angle) * radius);
-                double y = center.getY() + (progress * 3.6D);
+                double y = center.getY() + (progress * PARTICLE_HEIGHT_SPAN);
                 double z = center.getZ() + (Math.sin(angle) * radius);
                 world.spawnParticle(Particle.ENCHANT, x, y, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
