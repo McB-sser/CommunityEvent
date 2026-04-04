@@ -27,6 +27,7 @@ replay_pid*
 # Build output
 target/
 build/
+/.cp.txt
 out/
 bin/
 dist/

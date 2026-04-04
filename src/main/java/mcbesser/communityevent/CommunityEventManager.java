@@ -7,6 +7,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.Vault;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.BlockDisplay;
@@ -55,6 +56,9 @@ public final class CommunityEventManager {
     private static final double PARTICLE_FIRST_PROGRESS = 0.25D;
     private static final double PARTICLE_TOP_PROGRESS = 0.95D;
     private static final int PARTICLE_STEPS = 4;
+    private static final double REWARD_HOLOGRAM_Y = 1.45D;
+    private static final float REWARD_HOLOGRAM_SCALE = 0.42F;
+    private static final long REWARD_HOLOGRAM_DURATION_TICKS = 100L;
 
     private final JavaPlugin plugin;
     private final Random random = new Random();
@@ -372,7 +376,8 @@ public final class CommunityEventManager {
         if (!leftover.isEmpty()) {
             clickedBlock.getWorld().dropItemNaturally(clickedBlock.getLocation().add(0.5, 1.0, 0.5), reward);
         }
-        player.sendMessage("Der Community-Tresor hat dir eine Belohnung gegeben.");
+        showRewardHologram(eventOptional.get(), reward);
+        player.sendMessage("Der Community-Tresor hat dir " + formatItemStack(player, reward) + " gegeben.");
         return true;
     }
 
@@ -427,6 +432,7 @@ public final class CommunityEventManager {
         Location abovePot = event.getAbovePotLocation();
         if (abovePot != null) {
             abovePot.getBlock().setType(Material.VAULT, false);
+            configureVault(event);
         }
 
         for (UUID participant : event.getParticipants()) {
@@ -447,6 +453,7 @@ public final class CommunityEventManager {
             if (abovePot != null && abovePot.getBlock().getType() != Material.VAULT) {
                 abovePot.getBlock().setType(Material.VAULT, false);
             }
+            configureVault(event);
             return;
         }
 
@@ -573,6 +580,86 @@ public final class CommunityEventManager {
         orbitLocation.setYaw((float) Math.toDegrees(-angle));
         orbitLocation.setPitch(0.0F);
         orbitItem.teleport(orbitLocation);
+    }
+
+    private void configureVault(EventData event) {
+        Location abovePot = event.getAbovePotLocation();
+        if (abovePot == null) {
+            return;
+        }
+
+        Block vaultBlock = abovePot.getBlock();
+        if (vaultBlock.getType() != Material.VAULT || !(vaultBlock.getState() instanceof Vault vault)) {
+            return;
+        }
+
+        vault.setKeyItem(createTrailKey(1));
+        vault.setDisplayedItem(getPreviewReward(event));
+        vault.update(true, false);
+    }
+
+    private ItemStack getPreviewReward(EventData event) {
+        if (rewardPool.isEmpty()) {
+            return new ItemStack(Material.BARRIER);
+        }
+        int index = Math.floorMod(event.getId().hashCode(), rewardPool.size());
+        return rewardPool.get(index).clone();
+    }
+
+    private void showRewardHologram(EventData event, ItemStack reward) {
+        Location abovePot = event.getAbovePotLocation();
+        if (abovePot == null || abovePot.getWorld() == null) {
+            return;
+        }
+
+        clearRewardHologram(event);
+
+        Location hologramLocation = abovePot.clone().add(0.5D, REWARD_HOLOGRAM_Y, 0.5D);
+        ItemDisplay rewardDisplay = abovePot.getWorld().spawn(hologramLocation, ItemDisplay.class);
+        rewardDisplay.setItemStack(reward.clone());
+        rewardDisplay.setPersistent(false);
+        rewardDisplay.setBillboard(Display.Billboard.CENTER);
+        rewardDisplay.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
+        rewardDisplay.setCustomName(formatItemStack(null, reward));
+        rewardDisplay.setCustomNameVisible(true);
+        rewardDisplay.setTransformation(new Transformation(
+                new Vector3f(0.0F, 0.0F, 0.0F),
+                new AxisAngle4f(),
+                new Vector3f(REWARD_HOLOGRAM_SCALE, REWARD_HOLOGRAM_SCALE, REWARD_HOLOGRAM_SCALE),
+                new AxisAngle4f()
+        ));
+        tag(rewardDisplay, event.getId(), "reward_hologram");
+
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (rewardDisplay.isValid()) {
+                rewardDisplay.remove();
+            }
+        }, REWARD_HOLOGRAM_DURATION_TICKS);
+    }
+
+    private void clearRewardHologram(EventData event) {
+        Location abovePot = event.getAbovePotLocation();
+        if (abovePot == null || abovePot.getWorld() == null) {
+            return;
+        }
+
+        String idTag = tagFor(event.getId());
+        String hologramTag = "communityevent:reward_hologram";
+        for (Entity entity : abovePot.getWorld().getNearbyEntities(abovePot.clone().add(0.5D, REWARD_HOLOGRAM_Y, 0.5D), 1.4D, 1.0D, 1.4D)) {
+            if (entity instanceof ItemDisplay
+                    && entity.getScoreboardTags().contains(idTag)
+                    && entity.getScoreboardTags().contains(hologramTag)) {
+                entity.remove();
+            }
+        }
+    }
+
+    private String formatItemStack(Player player, ItemStack itemStack) {
+        String materialName = MaterialNames.forPlayer(player, itemStack.getType());
+        if (itemStack.getAmount() <= 1) {
+            return materialName;
+        }
+        return itemStack.getAmount() + "x " + materialName;
     }
 
     private void spawnSpiralParticles(EventData event, long tick) {
