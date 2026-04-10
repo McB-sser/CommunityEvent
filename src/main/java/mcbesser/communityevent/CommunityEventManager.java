@@ -1,4 +1,4 @@
-package mcbesser.communityevent;
+﻿package mcbesser.communityevent;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -217,7 +217,7 @@ public final class CommunityEventManager {
         }
         pendingKeys.remove(player.getUniqueId());
         player.getInventory().addItem(createTrailKey(amount));
-        player.sendMessage("Du hast " + amount + " Community-Event Schluessel erhalten.");
+        player.sendMessage("Du hast " + amount + " Community-Event Schl\u00fcssel erhalten.");
         save();
     }
 
@@ -362,7 +362,7 @@ public final class CommunityEventManager {
         Block potBlock = clickedBlock.getRelative(0, -1, 0);
         Optional<EventData> eventOptional = findEvent(potBlock);
         if (eventOptional.isEmpty() || !eventOptional.get().isCompleted()) {
-            player.sendMessage("Diesen Community-Event Schluessel kannst du hier nicht benutzen.");
+            player.sendMessage("Diesen Community-Event Schl\u00fcssel kannst du hier nicht benutzen.");
             return true;
         }
 
@@ -397,10 +397,10 @@ public final class CommunityEventManager {
         ItemStack key = new ItemStack(Material.TRIAL_KEY, amount);
         ItemMeta meta = key.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("Community Event Schluessel");
+            meta.setDisplayName("Community Event Schl\u00fcssel");
             meta.setLore(List.of(
-                    "Nur fuer Community-Event Tresore.",
-                    "Normale Trial-Tresore akzeptieren diesen Schluessel nicht."
+                    "Nur f\u00fcr Community-Event Tresore.",
+                    "Normale Trial-Tresore akzeptieren diesen Schl\u00fcssel nicht."
             ));
             meta.getPersistentDataContainer().set(keyMarker, PersistentDataType.BYTE, (byte) 1);
             key.setItemMeta(meta);
@@ -439,7 +439,7 @@ public final class CommunityEventManager {
             Player player = Bukkit.getPlayer(participant);
             if (player != null && player.isOnline()) {
                 player.getInventory().addItem(createTrailKey(1));
-                player.sendMessage("Das Community-Event ist abgeschlossen. Du hast einen Schluessel erhalten.");
+                player.sendMessage("Das Community-Event ist abgeschlossen. Du hast einen Schl\u00fcssel erhalten.");
             } else {
                 pendingKeys.merge(participant, 1, Integer::sum);
             }

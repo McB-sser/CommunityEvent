@@ -1,4 +1,4 @@
-name: CommunityEvent
+﻿name: CommunityEvent
 version: 1.0.0-SNAPSHOT
 main: mcbesser.communityevent.CommunityEventPlugin
 api-version: '1.21'

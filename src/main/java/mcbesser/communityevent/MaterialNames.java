@@ -1,4 +1,4 @@
-package mcbesser.communityevent;
+﻿package mcbesser.communityevent;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -29,7 +29,7 @@ public final class MaterialNames {
             Map.entry(Material.WHEAT_SEEDS, "Weizensamen"),
             Map.entry(Material.BEETROOT_SEEDS, "Rote-Bete-Samen"),
             Map.entry(Material.MELON_SEEDS, "Melonensamen"),
-            Map.entry(Material.PUMPKIN_SEEDS, "Kuerbissamen"),
+            Map.entry(Material.PUMPKIN_SEEDS, "K\u00fcrbissamen"),
             Map.entry(Material.COCOA_BEANS, "Kakaobohnen"),
             Map.entry(Material.WHEAT, "Weizen"),
             Map.entry(Material.CARROT, "Karotte"),
@@ -37,7 +37,7 @@ public final class MaterialNames {
             Map.entry(Material.BEETROOT, "Rote Bete"),
             Map.entry(Material.MELON_SLICE, "Melonenscheibe"),
             Map.entry(Material.MELON, "Melonenblock"),
-            Map.entry(Material.PUMPKIN, "Kuerbis")
+            Map.entry(Material.PUMPKIN, "K\u00fcrbis")
     );
 
     private MaterialNames() {

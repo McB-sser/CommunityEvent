@@ -1,4 +1,4 @@
-package mcbesser.communityevent;
+﻿package mcbesser.communityevent;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -104,7 +104,7 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
         eventManager.findEvent(clicked).ifPresent(data -> {
             event.setCancelled(true);
             if (data.isCompleted()) {
-                player.sendMessage("Dieses Event ist abgeschlossen. Nutze den Tresor ueber dem Topf.");
+                player.sendMessage("Dieses Event ist abgeschlossen. Nutze den Tresor \u00fcber dem Topf.");
                 return;
             }
 
@@ -131,18 +131,18 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
         if (block.getType() == Material.DECORATED_POT) {
             if (eventManager.findEvent(block).isPresent() && !event.getPlayer().isOp()) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage("Nur OPs duerfen diese Community-Konstruktion abbauen.");
+                event.getPlayer().sendMessage("Nur OPs d\u00fcrfen diese Community-Konstruktion abbauen.");
                 return;
             }
             eventManager.removeEvent(block, true);
         } else if (block.getType() == Material.VAULT && eventManager.isEventVault(block)) {
             if (!event.getPlayer().isOp()) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage("Nur OPs duerfen diese Community-Konstruktion abbauen.");
+                event.getPlayer().sendMessage("Nur OPs d\u00fcrfen diese Community-Konstruktion abbauen.");
                 return;
             }
             event.setCancelled(true);
-            event.getPlayer().sendMessage("Baue den dekorierten Topf ab, um die Community-Konstruktion zu entfernen.");
+            event.getPlayer().sendMessage("Ba\u00fc den dekorierten Topf ab, um die Community-Konstruktion zu entfernen.");
         }
     }
 
@@ -211,7 +211,7 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
                     ChatColor.YELLOW + "Ziel: " + ChatColor.WHITE + "???",
                     ChatColor.YELLOW + "Fortschritt: " + ChatColor.WHITE + "???",
                     ChatColor.DARK_GRAY + "  ",
-                    ChatColor.GREEN + "Es muessen Items",
+                    ChatColor.GREEN + "Es m\u00fcssen Items",
                     ChatColor.GREEN + "gesammelt werden,",
                     ChatColor.GREEN + "aber welches?",
                     ChatColor.GREEN + "Finde es heraus",
