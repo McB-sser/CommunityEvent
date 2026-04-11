@@ -1,4 +1,4 @@
-﻿package mcbesser.communityevent;
+package mcbesser.communityevent;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

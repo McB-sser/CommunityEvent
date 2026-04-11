@@ -1,4 +1,4 @@
-﻿package mcbesser.communityevent;
+package mcbesser.communityevent;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
