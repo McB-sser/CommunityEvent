@@ -464,6 +464,12 @@ public final class CommunityEventManager {
         if (!isEventChunkLoaded(event)) {
             return;
         }
+        Location potLocation = event.getPotLocation();
+        if (!hasNearbyViewer(potLocation)) {
+            clearVisuals(event);
+            clearRewardHologram(event);
+            return;
+        }
         clearVisuals(event);
         if (event.isCompleted()) {
             Location abovePot = event.getAbovePotLocation();
@@ -473,8 +479,6 @@ public final class CommunityEventManager {
             configureVault(event);
             return;
         }
-
-        Location potLocation = event.getPotLocation();
         if (potLocation == null || potLocation.getWorld() == null) {
             return;
         }
@@ -560,6 +564,14 @@ public final class CommunityEventManager {
         if (!isEventChunkLoaded(event)) {
             return;
         }
+        Location potLocation = event.getPotLocation();
+        if (!hasNearbyViewer(potLocation)) {
+            if (hasAnyTaggedVisuals(event)) {
+                clearVisuals(event);
+            }
+            clearRewardHologram(event);
+            return;
+        }
         if (event.isCompleted()) {
             if (hasAnyTaggedVisuals(event)) {
                 clearVisuals(event);
@@ -635,6 +647,23 @@ public final class CommunityEventManager {
         return count;
     }
 
+    private boolean hasNearbyViewer(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return false;
+        }
+        double maxDistance = plugin.getConfig().getDouble("display.max-view-distance", 64.0D);
+        double maxDistanceSquared = maxDistance * maxDistance;
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player == null || !player.isOnline() || player.isDead() || player.getWorld() != location.getWorld()) {
+                continue;
+            }
+            if (player.getLocation().distanceSquared(location) <= maxDistanceSquared) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean isEventChunkLoaded(EventData event) {
         Location potLocation = event.getPotLocation();
         return potLocation != null
@@ -644,7 +673,8 @@ public final class CommunityEventManager {
 
     private void animateOrbitItem(EventData event, long tick) {
         Location potLocation = event.getPotLocation();
-        if (potLocation == null || potLocation.getWorld() == null || event.getCollectedAmount() <= 0) {
+        if (potLocation == null || potLocation.getWorld() == null || event.getCollectedAmount() <= 0
+                || !hasNearbyViewer(potLocation)) {
             return;
         }
 

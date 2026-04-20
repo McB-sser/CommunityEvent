@@ -36,6 +36,7 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         eventManager = new CommunityEventManager(this);
         eventManager.load();
         eventManager.clearLoadedVisuals();
