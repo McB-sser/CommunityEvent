@@ -38,8 +38,10 @@ public final class CommunityEventPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         eventManager = new CommunityEventManager(this);
         eventManager.load();
+        eventManager.clearLoadedVisuals();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().runTask(this, eventManager::syncAllDisplays);
+        getServer().getScheduler().runTaskTimer(this, eventManager::syncAllDisplays, 40L, 40L);
         getServer().getScheduler().runTaskTimer(this, () -> eventManager.animateVisuals(getServer().getCurrentTick()), 1L, 1L);
         getServer().getScheduler().runTaskTimer(this, this::updateViewedEventScoreboards, 10L, 10L);
     }

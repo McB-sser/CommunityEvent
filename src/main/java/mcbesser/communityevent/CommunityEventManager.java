@@ -196,17 +196,31 @@ public final class CommunityEventManager {
 
     public void syncAllDisplays() {
         for (EventData event : events.values()) {
-            refreshVisuals(event);
+            syncVisuals(event);
         }
     }
 
     public void animateVisuals(long tick) {
         for (EventData event : events.values()) {
+            if (!isEventChunkLoaded(event)) {
+                continue;
+            }
             if (event.isCompleted()) {
                 continue;
             }
             animateOrbitItem(event, tick);
             spawnSpiralParticles(event, tick);
+        }
+    }
+
+    public void clearLoadedVisuals() {
+        for (World world : Bukkit.getWorlds()) {
+            Collection<Entity> entities = new ArrayList<>(world.getEntities());
+            for (Entity entity : entities) {
+                if (entity.getScoreboardTags().contains("communityevent")) {
+                    entity.remove();
+                }
+            }
         }
     }
 
@@ -447,6 +461,9 @@ public final class CommunityEventManager {
     }
 
     private void refreshVisuals(EventData event) {
+        if (!isEventChunkLoaded(event)) {
+            return;
+        }
         clearVisuals(event);
         if (event.isCompleted()) {
             Location abovePot = event.getAbovePotLocation();
@@ -468,7 +485,7 @@ public final class CommunityEventManager {
             Location displayLocation = potLocation.clone().add(0.5, segmentBase, 0.5);
             BlockDisplay glassSegment = potLocation.getWorld().spawn(displayLocation, BlockDisplay.class);
             glassSegment.setBlock(Bukkit.createBlockData(Material.GLASS));
-            glassSegment.setPersistent(true);
+            glassSegment.setPersistent(false);
             glassSegment.setBillboard(Display.Billboard.FIXED);
             glassSegment.setTransformation(new Transformation(
                     new Vector3f(-COLUMN_WIDTH / 2.0F, 0.0F, -COLUMN_WIDTH / 2.0F),
@@ -489,7 +506,7 @@ public final class CommunityEventManager {
             Location itemLocation = potLocation.clone().add(0.5, yOffset, 0.5);
             ItemDisplay itemDisplay = potLocation.getWorld().spawn(itemLocation, ItemDisplay.class);
             itemDisplay.setItemStack(new ItemStack(event.getTargetMaterial()));
-            itemDisplay.setPersistent(true);
+            itemDisplay.setPersistent(false);
             itemDisplay.setBillboard(Display.Billboard.FIXED);
             itemDisplay.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
             float rotationX = (float) (-Math.PI / 2.0D + seededRange(event.getId(), i, 0.38D));
@@ -510,7 +527,7 @@ public final class CommunityEventManager {
         Location topPotLocation = potLocation.clone().add(0.5, TOP_POT_Y, 0.5);
         BlockDisplay topPot = potLocation.getWorld().spawn(topPotLocation, BlockDisplay.class);
         topPot.setBlock(Bukkit.createBlockData(Material.FLOWER_POT));
-        topPot.setPersistent(true);
+        topPot.setPersistent(false);
         topPot.setBillboard(Display.Billboard.FIXED);
         topPot.setTransformation(new Transformation(
                 new Vector3f(-TOP_POT_SCALE / 2.0F, 0.0F, -TOP_POT_SCALE / 2.0F),
@@ -524,7 +541,7 @@ public final class CommunityEventManager {
             Location orbitLocation = potLocation.clone().add(0.5, ORBIT_ITEM_Y, 0.5);
             ItemDisplay orbitItem = potLocation.getWorld().spawn(orbitLocation, ItemDisplay.class);
             orbitItem.setItemStack(new ItemStack(event.getTargetMaterial()));
-            orbitItem.setPersistent(true);
+            orbitItem.setPersistent(false);
             orbitItem.setBillboard(Display.Billboard.FIXED);
             orbitItem.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
             orbitItem.setInterpolationDuration(2);
@@ -536,6 +553,26 @@ public final class CommunityEventManager {
                     new AxisAngle4f()
             ));
             tag(orbitItem, event.getId(), "orbit_item");
+        }
+    }
+
+    private void syncVisuals(EventData event) {
+        if (!isEventChunkLoaded(event)) {
+            return;
+        }
+        if (event.isCompleted()) {
+            if (hasAnyTaggedVisuals(event)) {
+                clearVisuals(event);
+            }
+            Location abovePot = event.getAbovePotLocation();
+            if (abovePot != null && abovePot.getBlock().getType() != Material.VAULT) {
+                abovePot.getBlock().setType(Material.VAULT, false);
+            }
+            configureVault(event);
+            return;
+        }
+        if (!hasExpectedVisualCount(event)) {
+            refreshVisuals(event);
         }
     }
 
@@ -551,6 +588,58 @@ public final class CommunityEventManager {
                 entity.remove();
             }
         }
+    }
+
+    private boolean hasAnyTaggedVisuals(EventData event) {
+        return countTaggedVisuals(event) > 0;
+    }
+
+    private boolean hasExpectedVisualCount(EventData event) {
+        return countTaggedVisuals(event) == expectedVisualCount(event);
+    }
+
+    private int countTaggedVisuals(EventData event) {
+        Location potLocation = event.getPotLocation();
+        if (potLocation == null || potLocation.getWorld() == null) {
+            return 0;
+        }
+        String idTag = tagFor(event.getId());
+        int count = 0;
+        for (Entity entity : potLocation.getWorld().getNearbyEntities(potLocation.clone().add(0.5D, 1.8D, 0.5D), 2.0D, 3.5D, 2.0D)) {
+            if (!entity.getScoreboardTags().contains(idTag)) {
+                continue;
+            }
+            if (entity.getScoreboardTags().contains("communityevent:tube")
+                    || entity.getScoreboardTags().contains("communityevent:progress")
+                    || entity.getScoreboardTags().contains("communityevent:top_pot")
+                    || entity.getScoreboardTags().contains("communityevent:orbit_item")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int expectedVisualCount(EventData event) {
+        if (event.isCompleted()) {
+            return 0;
+        }
+        int count = TUBE_SEGMENTS + 1;
+        int visibleItems = (int) Math.ceil(event.getProgress() * PROGRESS_ITEMS);
+        if (event.getCollectedAmount() > 0 && visibleItems == 0) {
+            visibleItems = 1;
+        }
+        count += visibleItems;
+        if (event.getCollectedAmount() > 0) {
+            count++;
+        }
+        return count;
+    }
+
+    private boolean isEventChunkLoaded(EventData event) {
+        Location potLocation = event.getPotLocation();
+        return potLocation != null
+                && potLocation.getWorld() != null
+                && potLocation.getWorld().isChunkLoaded(potLocation.getBlockX() >> 4, potLocation.getBlockZ() >> 4);
     }
 
     private void animateOrbitItem(EventData event, long tick) {
